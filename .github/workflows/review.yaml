@@ -1,0 +1,23 @@
+name: Code Review
+
+on:
+  push:
+    branches:
+      - "**"       # Every branch
+
+  pull_request:
+    branches:
+      - "**"       # Every PR targeting any branch
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: python Scripts/Reviewer.py
