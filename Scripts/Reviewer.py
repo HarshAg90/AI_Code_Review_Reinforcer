@@ -1,49 +1,67 @@
+# import requests
+
+# url = "https://64cc-2401-4900-1c55-4adc-212b-db4b-e4f2-36e0.ngrok-free.app/data?key1=value1&key2=value2"
+
+# response = requests.get(url)
+import json
+import os
 import requests
 
-url = "https://64cc-2401-4900-1c55-4adc-212b-db4b-e4f2-36e0.ngrok-free.app/data?key1=value1&key2=value2"
+# -------------------------------------------------------
+# Read GitHub Event Payload
+# -------------------------------------------------------
 
-response = requests.get(url)
+event_path = os.environ["GITHUB_EVENT_PATH"]
 
-# if response.status_code == 200:
-#     data = response.json()  # if the response is JSON
-#     # print(data)
-# else:
-#     print(f"Request failed with status code: {response.status_code}")
+with open(event_path, "r") as f:
+    event = json.load(f)
 
-# from pathlib import Path
-# FORBIDDEN = [
-#     "TODO",
-#     "console.log",
-#     "print("
-# ]
-# MAX_LINES = 500
+pull_number = event["pull_request"]["number"]
 
-# violations = []
+repository = os.environ["GITHUB_REPOSITORY"]
 
-# for file in Path(".").rglob("*"):
-#     if file.is_dir():
-#         continue
-#     if ".git" in str(file):
-#         continue
-#     try:
-#         text = file.read_text(encoding="utf-8")
-#     except:
-#         continue
-#     lines = text.splitlines()
-#     if len(lines) > MAX_LINES:
-#         violations.append(
-#             f"{file}: exceeds {MAX_LINES} lines"
-#         )
-#     for number, line in enumerate(lines, start=1):
-#         for keyword in FORBIDDEN:
-#             if keyword in line:
-#                 violations.append(
-#                     f"{file}:{number} contains '{keyword}'"
-#                 )
+token = os.environ["GITHUB_TOKEN"]
 
-# if violations:
-#     print("Review Failed\n")
-#     for v in violations:
-#         print(v)
-#     exit(1)
-# print("Review Passed")
+owner, repo = repository.split("/")
+
+print(f"Repository : {repository}")
+print(f"PR Number  : {pull_number}")
+
+# -------------------------------------------------------
+# Request Changed Files
+# -------------------------------------------------------
+
+url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pull_number}/files"
+
+headers = {
+    "Authorization": f"Bearer {token}",
+    "Accept": "application/vnd.github+json"
+}
+
+response = requests.get(url, headers=headers)
+
+response.raise_for_status()
+
+files = response.json()
+
+print(f"\nFound {len(files)} changed files\n")
+
+# -------------------------------------------------------
+# Print Information
+# -------------------------------------------------------
+
+for file in files:
+
+    print("=" * 60)
+
+    print("Filename :", file["filename"])
+    print("Status   :", file["status"])
+    print("Additions:", file["additions"])
+    print("Deletions:", file["deletions"])
+    print("Changes  :", file["changes"])
+
+    print("\nPatch:\n")
+
+    print(file.get("patch", "<No patch available>"))
+
+    print()
