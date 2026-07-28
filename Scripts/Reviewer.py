@@ -16,6 +16,7 @@ event_path = os.environ["GITHUB_EVENT_PATH"]
 with open(event_path, "r") as f:
     event = json.load(f)
 
+print(event)
 pull_number = event["pull_request"]["number"]
 
 repository = os.environ["GITHUB_REPOSITORY"]
